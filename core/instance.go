@@ -693,7 +693,7 @@ func (i *instance) generateTagsList() []*ec2.TagSpecification {
 // run in case there are no spot instances
 func (i *instance) isReadyToAttach(asg *autoScalingGroup) bool {
 
-	logger.Println("Considering ", *i.InstanceId, "for attaching to", asg.name)
+	logger.Println("Considering to attach ", *i.InstanceId, " to", asg.name)
 
 	gracePeriod := *asg.HealthCheckGracePeriod
 

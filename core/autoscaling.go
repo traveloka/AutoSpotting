@@ -124,7 +124,7 @@ func (a *autoScalingGroup) process() {
 	a.loadDefaultConfig()
 	a.loadConfigFromTags()
 
-	logger.Println("Finding spot instances created for", a.name)
+	debug.Println("Finding spot instances created for", a.name)
 
 	spotInstance := a.findUnattachedInstanceLaunchedForThisASG()
 	debug.Println("Candidate Spot instance", spotInstance)
@@ -183,7 +183,7 @@ func (a *autoScalingGroup) process() {
 		return
 	}
 
-	logger.Println(a.region.name, "Found spot instance:", spotInstanceID,
+	logger.Println(a.region.name, "found spot instance:", spotInstanceID,
 		"Attaching it to", a.name)
 
 	a.replaceOnDemandInstanceWithSpot(spotInstanceID)
@@ -234,7 +234,7 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	}
 
 	// get the details of our spot instance so we can see its AZ
-	logger.Println(a.name, "Retrieving instance details for ", spotInstanceID)
+	debug.Println(a.name, "Retrieving instance details for ", spotInstanceID)
 	spotInst := a.region.instances.get(spotInstanceID)
 	if spotInst == nil {
 		return errors.New("couldn't find spot instance to use")
@@ -247,14 +247,15 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	odInst := a.getUnprotectedOnDemandInstanceInAZ(az)
 
 	if odInst == nil {
-		logger.Println(a.name, "found no on-demand instances that could be",
-			"replaced with the new spot instance", *spotInst.InstanceId,
+		logger.Println(a.name, "found no on-demand instances that's",
+			"in the same availability zone as ", *spotInst.InstanceId,
 			"terminating the spot instance.")
 		spotInst.terminate()
 		return errors.New("couldn't find ondemand instance to replace")
 	}
 	logger.Println(a.name, "found on-demand instance", *odInst.InstanceId,
-		"replacing with new spot instance", *spotInst.InstanceId)
+		"replacing with ", *spotInst.InstanceId)
+
 	// revert attach/detach order when running on minimum capacity
 	if desiredCapacity == minSize {
 		attachErr := a.attachSpotInstance(spotInstanceID)
@@ -515,7 +516,7 @@ func (a *autoScalingGroup) alreadyRunningInstanceCount(
 	if !spot {
 		instanceCategory = "on-demand"
 	}
-	logger.Println(a.name, "Counting already running on demand instances ")
+	debug.Println(a.name, "Counting already running on demand instances ")
 	for inst := range a.instances.instances() {
 		if *inst.Instance.State.Name == "running" {
 			// Count running Spot instances
