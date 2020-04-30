@@ -354,7 +354,7 @@ func (a *autoScalingGroup) loadDefaultConfig() bool {
 	if !done && a.region.conf.MinOnDemandPercentage != 0 {
 		a.minOnDemand, done = a.loadDefaultConfigPercentage()
 	} else {
-		logger.Println("No default value for on-demand instances specified, skipping.")
+		debug.Println("No default value for on-demand instances specified, skipping.")
 	}
 	return done
 }

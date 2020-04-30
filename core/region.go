@@ -394,7 +394,7 @@ func (r *region) findMatchingASGsInPageOfResults(groups []*autoscaling.Group,
 			}
 		}
 
-		logger.Printf("Enabling group %s for processing because its tags, the "+
+		debug.Printf("Enabling group %s for processing because its tags, the "+
 			"currently configured  filtering mode (%s) and tag filters are aligned\n",
 			asgName, r.conf.TagFilteringMode)
 		asgs = append(asgs, autoScalingGroup{
