@@ -256,16 +256,12 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	logger.Println(a.name, "found on-demand instance", *odInst.InstanceId,
 		"replacing with ", *spotInst.InstanceId)
 
-	// revert attach/detach order when running on minimum capacity
-	if desiredCapacity == minSize {
-		attachErr := a.attachSpotInstance(spotInstanceID)
-		if attachErr != nil {
-			logger.Println(a.name, "skipping detaching on-demand due to failure to",
-				"attach the new spot instance", *spotInst.InstanceId)
-			return nil
-		}
-	} else {
-		defer a.attachSpotInstance(spotInstanceID)
+	// revert attach/detach order when running on minimum (or 1) capacity
+	attachErr := a.attachSpotInstance(spotInstanceID)
+	if attachErr != nil {
+		logger.Println(a.name, "skipping detaching on-demand due to failure to",
+			"attach the new spot instance ", *spotInst.InstanceId)
+		return nil
 	}
 
 	switch a.config.TerminationMethod {
@@ -435,6 +431,8 @@ func (a *autoScalingGroup) attachSpotInstance(spotInstanceID string) error {
 
 	svc := a.region.services.autoScaling
 
+	// When you attach instances, Amazon EC2 Auto Scaling increases
+	// the desired capacity of the group automatically
 	params := autoscaling.AttachInstancesInput{
 		AutoScalingGroupName: aws.String(a.name),
 		InstanceIds: []*string{
