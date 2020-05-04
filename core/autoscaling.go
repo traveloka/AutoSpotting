@@ -192,7 +192,7 @@ func (a *autoScalingGroup) process() {
 
 func (a *autoScalingGroup) scanInstances() instances {
 
-	logger.Println("Adding instances to", a.name)
+	debug.Println("scanning the instances of ", a.name)
 	a.instances = makeInstances()
 
 	for _, inst := range a.Instances {
