@@ -224,7 +224,6 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	spotInstanceID string) error {
 
 	minSize, maxSize := *a.MinSize, *a.MaxSize
-	desiredCapacity := *a.DesiredCapacity
 
 	// temporarily increase AutoScaling group in case it's of static size
 	if minSize == maxSize {
