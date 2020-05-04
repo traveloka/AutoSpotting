@@ -256,7 +256,6 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	logger.Println(a.name, "found on-demand instance", *odInst.InstanceId,
 		"replacing with ", *spotInst.InstanceId)
 
-	// revert attach/detach order when running on minimum (or 1) capacity
 	attachErr := a.attachSpotInstance(spotInstanceID)
 	if attachErr != nil {
 		logger.Println(a.name, "skipping detaching on-demand due to failure to",
