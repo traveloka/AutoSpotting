@@ -138,13 +138,13 @@ func (a *autoScalingGroup) process() {
 	}
 
 	if spotInstance == nil {
-		logger.Println("No spot instances were found for ", a.name)
+		debug.Println("No spot instances were spawned for ", a.name)
 
 		onDemandInstance := a.getAnyUnprotectedOnDemandInstance()
 
 		if onDemandInstance == nil {
-			logger.Println(a.region.name, a.name,
-				"No running unprotected on-demand instances were found, nothing to do here...")
+			debug.Println(a.region.name, a.name,
+				"No running unprotected on-demand instances were found, skipping this ASG...")
 			return
 		}
 
@@ -223,15 +223,6 @@ func (a *autoScalingGroup) scanInstances() instances {
 func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	spotInstanceID string) error {
 
-	minSize, maxSize := *a.MinSize, *a.MaxSize
-
-	// temporarily increase AutoScaling group in case it's of static size
-	if minSize == maxSize {
-		logger.Println(a.name, "Temporarily increasing MaxSize")
-		a.setAutoScalingMaxSize(maxSize + 1)
-		defer a.setAutoScalingMaxSize(maxSize)
-	}
-
 	// get the details of our spot instance so we can see its AZ
 	debug.Println(a.name, "Retrieving instance details for ", spotInstanceID)
 	spotInst := a.region.instances.get(spotInstanceID)
@@ -254,6 +245,16 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 	}
 	logger.Println(a.name, "found on-demand instance", *odInst.InstanceId,
 		"replacing with ", *spotInst.InstanceId)
+
+	desiredCapacity, maxSize := *a.DesiredCapacity, *a.MaxSize
+
+	// temporarily increase AutoScaling group in case the desired capacity is the max size,
+	// to make attach instances successful
+	if desiredCapacity == maxSize {
+		logger.Println(a.name, "Temporarily increasing MaxSize")
+		a.setAutoScalingMaxSize(maxSize + 1)
+		defer a.setAutoScalingMaxSize(maxSize)
+	}
 
 	attachErr := a.attachSpotInstance(spotInstanceID)
 	if attachErr != nil {
