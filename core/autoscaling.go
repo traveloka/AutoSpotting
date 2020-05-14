@@ -262,7 +262,7 @@ func (a *autoScalingGroup) replaceOnDemandInstanceWithSpot(
 			"attach the new spot instance ", *spotInst.InstanceId)
 		return nil
 	}
-
+	a.decrementAutoScalingDesiredCapacity(1)
 	switch a.config.TerminationMethod {
 	case DetachTerminationMethod:
 		return a.detachAndTerminateOnDemandInstance(odInst.InstanceId)
@@ -426,6 +426,24 @@ func (a *autoScalingGroup) setAutoScalingMaxSize(maxSize int64) error {
 	return nil
 }
 
+func (a *autoScalingGroup) decrementAutoScalingDesiredCapacity(value int64) error {
+	svc := a.region.services.autoScaling
+
+	_, err := svc.UpdateAutoScalingGroup(
+		&autoscaling.UpdateAutoScalingGroupInput{
+			AutoScalingGroupName: aws.String(a.name),
+			DesiredCapacity:      aws.Int64(*a.DesiredCapacity - value),
+		})
+
+	if err != nil {
+		// Print the error, cast err to awserr.Error to get the Code and
+		// Message from an error.
+		logger.Println(err.Error())
+		return err
+	}
+	return nil
+}
+
 func (a *autoScalingGroup) attachSpotInstance(spotInstanceID string) error {
 
 	svc := a.region.services.autoScaling
@@ -464,7 +482,7 @@ func (a *autoScalingGroup) detachAndTerminateOnDemandInstance(
 		InstanceIds: []*string{
 			instanceID,
 		},
-		ShouldDecrementDesiredCapacity: aws.Bool(true),
+		ShouldDecrementDesiredCapacity: aws.Bool(false),
 	}
 
 	asSvc := a.region.services.autoScaling
@@ -491,7 +509,7 @@ func (a *autoScalingGroup) terminateInstanceInAutoScalingGroup(
 	// terminate the on-demand instance
 	terminateParams := autoscaling.TerminateInstanceInAutoScalingGroupInput{
 		InstanceId:                     instanceID,
-		ShouldDecrementDesiredCapacity: aws.Bool(true),
+		ShouldDecrementDesiredCapacity: aws.Bool(false),
 	}
 
 	asSvc := a.region.services.autoScaling
